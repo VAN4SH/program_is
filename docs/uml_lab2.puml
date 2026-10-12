@@ -1,0 +1,45 @@
+@startuml TaskFlow_Lab2
+skinparam classAttributeIconSize 0
+
+interface ITaskRepository {
+  +create(draft): Task
+  +find_by_id(id): optional
+  +list(): vector
+  +update(task): bool
+}
+
+interface IPriorityStrategy {
+  +score(task): int
+}
+
+class TaskService {
+  -repository_
+  -priority_strategy_
+  -observers_
+  +create_task()
+  +assign()
+  +transition()
+  +list_by_priority()
+  +subscribe()
+}
+
+class InMemoryTaskRepository
+class SQLiteTaskRepository
+class DefaultPriorityStrategy
+class ClosedLastPriorityStrategy
+class AssigneePriorityStrategy
+class EventJournal
+class make_repository <<factory>>
+
+TaskService --> ITaskRepository
+TaskService --> IPriorityStrategy
+TaskService ..> EventJournal : Observer
+InMemoryTaskRepository ..|> ITaskRepository
+SQLiteTaskRepository ..|> ITaskRepository
+DefaultPriorityStrategy ..|> IPriorityStrategy
+ClosedLastPriorityStrategy ..|> IPriorityStrategy
+AssigneePriorityStrategy ..|> IPriorityStrategy
+make_repository ..> InMemoryTaskRepository
+make_repository ..> SQLiteTaskRepository
+
+@enduml

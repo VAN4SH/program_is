@@ -1,0 +1,14 @@
+build/
+build-*/
+dist/
+*.db
+.cmake/
+compile_commands.json
+.vscode/
+.idea/
+*.user
+CMakeUserPresets.json
+taskflow-package.tar.gz
+__pycache__/
+*.o
+*.a

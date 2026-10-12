@@ -1,0 +1,92 @@
+Как сдавать лабораторные и показывать TaskFlow IS
+=================================================
+
+Где всё лежит
+-------------
+Папка: Desktop\Программирование ИС\
+
+- taskflow\codebase_taskflow_cpp\   — исходный код ИС (после всех ЛР)
+- reports\Отчет_ЛР1_TaskFlow.docx … Отчет_ЛР4_TaskFlow.docx — отчёты
+- В WSL копия для быстрого запуска: ~/taskflow_is
+
+
+Что показывать преподавателю по каждой ЛР
+-----------------------------------------
+
+Общее для всех:
+1) Открыть отчёт Word (Times New Roman 14, интервал 1.5).
+2) Показать код изменений (коротко, 1–2 файла).
+3) В терминале WSL: сборка + ctest.
+4) Ответить на контрольные вопросы из отчёта.
+
+ЛР 1 — каркас ИС
+- Показать структуру папок: include / src / app / tests.
+- Команды:
+    cd ~/taskflow_is
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+    cmake --build build --parallel
+    ctest --test-dir build --output-on-failure
+    ./build/taskflow_cli
+- Сказать: добавлены description (max 1000), assign(), тесты назначения.
+
+ЛР 2 — паттерны
+- Показать: priority_strategy (AssigneePriorityStrategy),
+  repository_factory (memory/sqlite), sqlite_task_repository (заглушка),
+  event_journal + subscribe (Observer).
+- Файл UML: docs/uml_lab2.puml (можно открыть на plantuml.com).
+- Тесты паттернов: ctest (или ./build/taskflow_tests).
+
+ЛР 3 — автотесты и качество
+- Показать, что тестов много (24), есть negative и integration.
+- Показать ci/github-actions.yml.
+- По желанию ASAN:
+    cmake -S . -B build-asan -DENABLE_ASAN=ON -DCMAKE_BUILD_TYPE=Debug
+    cmake --build build-asan --parallel
+    ctest --test-dir build-asan --output-on-failure
+- В отчёте — таблица трассировки и 2 риска.
+
+ЛР 4 — нагрузка и развёртывание
+- Запуск API:
+    cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_HTTP_SERVER=ON
+    cmake --build build-release --parallel
+    ./build-release/taskflow_server
+- В другом терминале:
+    curl http://localhost:8080/health
+    curl http://localhost:8080/tasks
+    curl -X POST http://localhost:8080/tasks -H "Content-Type: application/json" --data "{\"title\":\"demo\",\"assignee\":\"ivan\",\"priority\":2}"
+- Docker (если установлен Docker Desktop + интеграция WSL):
+    docker compose -f docker/docker-compose.yml up --build
+- k6 (если установлен):
+    k6 run load/k6_taskflow.js
+    k6 run load/k6_get_only.js
+    k6 run load/k6_mixed.js
+- Если k6/Docker нет — достаточно curl + объяснение сценариев из отчёта.
+
+
+Быстрый старт в WSL (каждый раз)
+--------------------------------
+wsl
+cd ~/taskflow_is
+# если копии нет:
+# cp -a "/mnt/c/Users/User/Desktop/Программирование ИС/taskflow/codebase_taskflow_cpp/." ~/taskflow_is/
+
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_HTTP_SERVER=ON
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+./build/taskflow_cli
+./build/taskflow_server   # API на 8080
+
+
+Что говорить «своими словами» (кратко)
+-------------------------------------
+- ИС TaskFlow хранит задачи: title, assignee, description, status, priority.
+- Слои: домен / сервис / репозиторий / CLI или HTTP.
+- Тесты через CTest, чтобы проверять после каждой правки.
+- Strategy меняет сортировку, Factory выбирает storage, Observer пишет события.
+- HTTP нужен для нагрузки и Docker; /health — smoke-проверка.
+
+
+Необязательно, но плюс
+----------------------
+- Установить Docker Desktop и k6, прогнать сценарии и вставить скрин в отчёт ЛР4.
+- На защите не читать отчёт целиком — показать команды и 2–3 ключевых фрагмента кода.
